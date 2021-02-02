@@ -9,7 +9,16 @@ class MyGame extends Phaser.Scene
 {
   constructor ()
   {
-    super();
+    super({
+      // 物理引擎设置
+      physics: {
+        default: 'arcade',
+        arcade: {
+          // 重力
+          gravity: { y: 2000 },
+        }
+      }
+    });
   }
 
   preload ()
@@ -26,8 +35,10 @@ class MyGame extends Phaser.Scene
     logo.setOrigin(0.5, 0).setScale(0.85)
 
     // 小鸟
-    const bird = this.add.sprite(200, 300, 'bird1')
-    bird.setScale(0.1)
+    const bird = this.physics.add.sprite(200, 300, 'bird1')
+    bird.setScale(0.1).refreshBody()
+    // 场景保存bird实例
+    this.bird = bird
 
     this.anims.create({
       key: 'fly',
@@ -50,7 +61,28 @@ class MyGame extends Phaser.Scene
     })
 
     bird.play('fly')
-    setTimeout(() => bird.play('fall'), 3000)
+    // 先暂停物理引擎
+    this.physics.pause()
+
+    this.input.keyboard.on('keydown', () => {
+      // 开启物理引擎
+      this.physics.resume()
+      // 设置向上的速度
+      bird.setVelocityY(-600)
+    })
+
+    // ~~~
+    window.start = () => this.physics.resume()
+  }
+
+  update()
+  {
+    // 根据垂直速度播放相应动画
+    if (this.bird.body.velocity.y <= 0) {
+      this.bird.anims.play('fly', true)
+    } else {
+      this.bird.play('fall', true)
+    }
   }
 }
 
