@@ -29,7 +29,7 @@ class MyGame extends Phaser.Scene
           // 重力
           gravity: { y: 2000 },
           // 开启debug
-          debug: true,
+          // debug: true,
         }
       }
     });
@@ -40,6 +40,8 @@ class MyGame extends Phaser.Scene
     this.halfSpace = 100
     // 是否可以重新开始
     this.canRestart = false
+    // 分数
+    this.score = 0
   }
 
   /**
@@ -49,6 +51,7 @@ class MyGame extends Phaser.Scene
   {
     this.gameState = GAMESTATE.waiting
     this.canRestart = false
+    this.score = 0
   }
   /**
    * 开始游戏
@@ -83,6 +86,8 @@ class MyGame extends Phaser.Scene
     const bg = this.add.image(200, 0, 'bg');
     bg.setOrigin(0.5, 0).setScale(0.85)
 
+    // 分数触发器组
+    const scoreTriggers = this.physics.add.group()
     // 创建柱子
     const pillars = this.physics.add.group()
     // 上下柱子空间的一半
@@ -99,9 +104,16 @@ class MyGame extends Phaser.Scene
       // 下面的柱子
       const bottomPillar = pillars.create(x, randomY + halfSpace, 'pillar')
       bottomPillar.setOrigin(0, 0).setGravityY(-2000)
+
+      // 得分触发器
+      const trigger = this.add.rectangle(x, randomY, 80, halfSpace * 1.6)
+      scoreTriggers.add(trigger)
+      trigger.body.allowGravity = false
+      trigger.setOrigin(0, 0.5)
     }
 
     this.pillars = pillars
+    this.scoreTriggers = scoreTriggers
 
     // 添加地面
     const ground = this.physics.add.group({
@@ -137,6 +149,13 @@ class MyGame extends Phaser.Scene
     // 场景保存bird实例
     this.bird = bird
 
+    // 分数
+    const scoreText = this.add.text(200, 70, '0', {
+      color: 'white',
+      fontSize: '64px',
+    })
+    scoreText.setOrigin(0.5, 0.5)
+
     // 小鸟与地面碰撞
     this.physics.add.collider(bird, staticGround, () => {
       if (this.gameState === GAMESTATE.playing) {
@@ -148,6 +167,18 @@ class MyGame extends Phaser.Scene
     this.physics.add.overlap(bird, pillars, () => {
       if (this.gameState === GAMESTATE.playing) {
         this.gameover()
+      }
+    })
+
+    // 小鸟与得分触发器碰撞
+    this.theLastTrigger = null
+    this.physics.add.overlap(bird, scoreTriggers, (obj1, trigger) => {
+      // 仅当不是上一次的触发器时才计分
+      if (trigger !== this.theLastTrigger) {
+        this.score += 1
+        scoreText.setText(`${this.score}`)
+        // 记录触发器
+        this.theLastTrigger = trigger
       }
     })
 
@@ -172,6 +203,7 @@ class MyGame extends Phaser.Scene
     })
 
     bird.play('fly')
+
     // 先暂停物理引擎
     this.physics.pause()
 
@@ -234,6 +266,8 @@ class MyGame extends Phaser.Scene
       const tp = this.pillars.children.entries[i]
       // 下面的柱子
       const bp = this.pillars.children.entries[i + 1]
+      // 得分触发器
+      const trigger = this.scoreTriggers.children.entries[i / 2]
       // 超出指定位置后循环到队尾
       if (tp.body.position.x <= -240) {
         // 队尾x坐标
@@ -244,17 +278,21 @@ class MyGame extends Phaser.Scene
         tp.setPosition(x, randomY - this.halfSpace)
         // 修改下面的柱子位置
         bp.setPosition(x, randomY + this.halfSpace)
+        // 修改触发器的位置
+        trigger.setPosition(x, randomY)
       }
     }
 
     if (this.gameState === GAMESTATE.playing) {
       this.ground.setVelocityX(-200)
       this.pillars.setVelocityX(-200)
+      this.scoreTriggers.setVelocityX(-200)
     }
     else if (this.gameState === GAMESTATE.gameover) {
       // 地面停止移动
       this.ground.setVelocityX(0)
       this.pillars.setVelocityX(0)
+      this.scoreTriggers.setVelocityX(0)
     }
     else if (this.gameState === GAMESTATE.waiting) {
       //
