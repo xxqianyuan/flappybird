@@ -67,7 +67,20 @@ class MyGame extends Phaser.Scene
   {
     this.gameState = GAMESTATE.gameover
     // 1秒后可以重新开始游戏
-    setTimeout(() => this.canRestart = true, 1000)
+    setTimeout(() => {
+      this.canRestart = true
+      // 隐藏游戏分数
+      this.scoreText.setVisible(false)
+      // 显示提示信息
+      this.showOverInfo()
+    }, 1000)
+
+    // 获取最高分
+    const highScore = parseInt(localStorage.getItem('highScore'))
+    // 更新最高分
+    if (!highScore || this.score > highScore) {
+      localStorage.setItem('highScore', this.score)
+    }
   }
 
   preload ()
@@ -79,7 +92,101 @@ class MyGame extends Phaser.Scene
     const birds = [bird1, bird2, bird3, bird4]
     birds.forEach((bird, i) => this.load.image(`bird${i + 1}`, bird))
   }
+
+  /**
+   * 创建游戏结束时显示的分数等信息
+   */
+  createOverInfo ()
+  {
+    // 将所有信息放入组中
+    const info = this.add.group()
+    this.overInfo = info
+
+    // 遮罩层
+    const cover = this.add.rectangle(200, 300, 600, 800, 0x000000, 0.6)
+    info.add(cover)
+
+    // 文字样式
+    const style = {
+      color: 'white',
+    }
     
+    const scoreLabel = this.add.text(200, 160, 'SCORE', {
+      color: 'white',
+      fontSize: '32px',
+    })
+    scoreLabel.setOrigin(0.5, 0.5)
+    info.add(scoreLabel)
+
+    const scoreText = this.add.text(200, 220, this.score, {
+      ...style,
+      fontSize: '64px',
+    })
+    scoreText.setOrigin(0.5, 0.5)
+    info.add(scoreText)
+    this.overScoreText = scoreText
+
+    // 最高得分
+    const highScoreLabel = this.add.text(200, 280, 'Max Score', {
+      ...style,
+      fontSize: '24px',
+    })
+    highScoreLabel.setOrigin(0.5, 0.5)
+    info.add(highScoreLabel)
+
+    // 最高分数
+    const highScoreText = this.add.text(200, 320, '0', {
+      ...style,
+      fontSize: '32px',
+    })
+    highScoreText.setOrigin(0.5, 0.5)
+    info.add(highScoreText)
+    this.overHighScoreText = highScoreText
+
+    // btn
+    const tryagainBtn = this.add.rectangle(200, 400, 180, 32, 0x8888ff)
+    // 边框
+    tryagainBtn.isStroked = true
+    tryagainBtn.strokeColor = 0xffffff
+    tryagainBtn.lineWidth = 4
+    info.add(tryagainBtn)
+
+    const btnLabel = this.add.text(200, 400, 'Try Again', {
+      ...style,
+      fontSize: '20px',
+    })
+    btnLabel.setOrigin(0.5, 0.5)
+    info.add(btnLabel)
+
+    // 监听点击
+    tryagainBtn.setInteractive()
+    tryagainBtn.on('pointerup', () => {
+      // 重新开始
+      this.scene.restart()
+      this.ready()
+    })
+
+    // 先隐藏
+    info.setVisible(false)
+  }
+
+  /**
+   * 显示游戏结束信息
+   */
+  showOverInfo ()
+  {
+    // 从localstorage获取最高得分
+    const highScore = localStorage.getItem('highScore')
+    // 设置最高分
+    this.overHighScoreText.setText(highScore || this.score)
+
+    // 设置分数
+    this.overScoreText.setText(this.score)
+
+    // 显示信息
+    this.overInfo.setVisible(true)
+  }
+
   create ()
   {
     // 背景
@@ -155,6 +262,7 @@ class MyGame extends Phaser.Scene
       fontSize: '64px',
     })
     scoreText.setOrigin(0.5, 0.5)
+    this.scoreText = scoreText
 
     // 小鸟与地面碰撞
     this.physics.add.collider(bird, staticGround, () => {
@@ -226,6 +334,9 @@ class MyGame extends Phaser.Scene
         bird.setVelocityY(-600)
       }
     })
+
+    // gameover 信息
+    this.createOverInfo()
 
     // ~~~
     window.start = () => this.physics.resume()
