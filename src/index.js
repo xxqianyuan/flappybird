@@ -38,6 +38,8 @@ class MyGame extends Phaser.Scene
     this.gameState = GAMESTATE.waiting
     // 柱子上下空间的一半
     this.halfSpace = 100
+    // 是否可以重新开始
+    this.canRestart = false
   }
 
   /**
@@ -46,6 +48,7 @@ class MyGame extends Phaser.Scene
   ready ()
   {
     this.gameState = GAMESTATE.waiting
+    this.canRestart = false
   }
   /**
    * 开始游戏
@@ -60,6 +63,8 @@ class MyGame extends Phaser.Scene
   gameover ()
   {
     this.gameState = GAMESTATE.gameover
+    // 1秒后可以重新开始游戏
+    setTimeout(() => this.canRestart = true, 1000)
   }
 
   preload ()
@@ -177,8 +182,11 @@ class MyGame extends Phaser.Scene
         // 开始游戏
         this.play()
       } else if (this.gameState === GAMESTATE.gameover) {
-        this.scene.restart()
-        this.ready()
+        // 当可以重新开始时
+        if (this.canRestart) {
+          this.scene.restart()
+          this.ready()
+        }
       }
       
       if (this.gameState !== GAMESTATE.gameover) {
