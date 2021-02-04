@@ -14,7 +14,7 @@ const GAMESTATE = {
   // 游戏中
   playing: 2,
   // 游戏结束
-  gameover: 0,
+  gameover: 3,
 }
 
 class MyGame extends Phaser.Scene
@@ -75,8 +75,8 @@ class MyGame extends Phaser.Scene
   create ()
   {
     // 背景
-    const logo = this.add.image(200, 0, 'bg');
-    logo.setOrigin(0.5, 0).setScale(0.85)
+    const bg = this.add.image(200, 0, 'bg');
+    bg.setOrigin(0.5, 0).setScale(0.85)
 
     // 创建柱子
     const pillars = this.physics.add.group()
@@ -114,7 +114,7 @@ class MyGame extends Phaser.Scene
       // 向左移动
       velocityX: -200,
       // 抵消世界的重力
-      gravityY: -2000,
+      allowGravity: false,
     })
 
     this.ground = ground
@@ -176,9 +176,15 @@ class MyGame extends Phaser.Scene
         this.physics.resume()
         // 开始游戏
         this.play()
+      } else if (this.gameState === GAMESTATE.gameover) {
+        this.scene.restart()
+        this.ready()
       }
-      // 设置向上的速度
-      bird.setVelocityY(-600)
+      
+      if (this.gameState !== GAMESTATE.gameover) {
+        // 设置向上的速度
+        bird.setVelocityY(-600)
+      }
     })
 
     // ~~~
