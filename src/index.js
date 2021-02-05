@@ -282,7 +282,7 @@ class MyGame extends Phaser.Scene
     this.theLastTrigger = null
     this.physics.add.overlap(bird, scoreTriggers, (obj1, trigger) => {
       // 仅当不是上一次的触发器时才计分
-      if (trigger !== this.theLastTrigger) {
+      if (trigger !== this.theLastTrigger && this.gameState === GAMESTATE.playing) {
         this.score += 1
         scoreText.setText(`${this.score}`)
         // 记录触发器
